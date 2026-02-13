@@ -1,11 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>project1</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Pixel Calculator</title>
+  <style>
+    :root {
+      --bg: #0f1223;
+      --card: rgba(18, 24, 44, 0.74);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #eaf0ff;
+      --muted: #a9b4d0;
+      --accent: #7c9bff;
+      --accent-2: #51e2c2;
+      --danger: #ff6b7d;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, #2f3f8f 0%, transparent 40%),
+        radial-gradient(circle at 85% 10%, #1a8b79 0%, transparent 36%),
+        var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(760px, 100%);
+      backdrop-filter: blur(5px);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 500ms ease-out;
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.4rem, 3.8vw, 2rem);
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .upload-form {
+      border: 1px dashed rgba(124, 155, 255, 0.55);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      transition: border-color 220ms ease, background-color 220ms ease, transform 220ms ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-form:hover,
+    .upload-form:focus-within {
+      border-color: var(--accent-2);
+      background: rgba(81, 226, 194, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .upload-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .chip {
+      font-size: 0.82rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .file-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .result-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      min-height: 76px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .value {
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 1.06rem;
+      letter-spacing: 0.25px;
+    }
+
+    .preview {
+      margin-top: 16px;
+      width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      display: none;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .error {
+      margin-top: 10px;
+      color: var(--danger);
+      min-height: 1.2rem;
+      font-size: 0.92rem;
+    }
+
+    .burst {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      opacity: 0;
+    }
+
+    .play-burst .dot {
+      animation: pop 900ms ease-out forwards;
+    }
+
+    @keyframes pop {
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.2);
+      }
+      18% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(1.05);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>hello world</h1>
+  <main class="card">
+    <h1>Image Pixel Calculator</h1>
+    <p class="subtitle">Upload an image and instantly see width, height, total pixels, and megapixels.</p>
+
+    <section id="uploadForm" class="upload-form" aria-live="polite">
+      <label for="imageInput" class="upload-label">
+        <span>Choose an image to calculate pixels</span>
+        <span id="fileName" class="chip">No file selected</span>
+      </label>
+      <input id="imageInput" class="file-input" type="file" accept="image/*" />
+      <div id="burst" class="burst" aria-hidden="true"></div>
+    </section>
+
+    <section class="result-grid">
+      <article class="result-item">
+        <div class="label">Width</div>
+        <div id="widthValue" class="value">-</div>
+      </article>
+      <article class="result-item">
+        <div class="label">Height</div>
+        <div id="heightValue" class="value">-</div>
+      </article>
+      <article class="result-item">
+        <div class="label">Total Pixels</div>
+        <div id="pixelValue" class="value">-</div>
+      </article>
+      <article class="result-item">
+        <div class="label">Megapixels</div>
+        <div id="megaPixelValue" class="value">-</div>
+      </article>
+    </section>
+
+    <div id="errorText" class="error"></div>
+    <img id="preview" class="preview" alt="Uploaded image preview" />
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
